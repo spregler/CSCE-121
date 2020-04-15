@@ -1,0 +1,115 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <stdexcept>
+#include "functions.h"
+
+using namespace std;
+
+/*  Function readPrefs
+ *  fileName: path to the file containing preferences
+ *  ngames:   number of games 
+ *  prefs:    array of integers created with MAX_NB_GAMES=200
+ *            positions. 
+ *  Return value: none
+ *  Throws: runtime_error if file cannot be opened
+ */
+void readPrefs(string fileName, int ngames, int prefs[]) {
+    int gameID; // integer variable to store ID(integer between 0 and 199)
+    int rating;
+
+	ifstream fin(fileName); // create ifstream object
+	if (!fin.is_open()) {  // error in opening the file
+        throw runtime_error("Invalid preferences file.");
+    }
+
+    for (int i = 0; i < ngames; i++) {
+    	prefs[i] = 0;
+    }
+
+    while (!fin.eof()) {  // while not at the end of the file
+    	fin >> gameID;
+    	fin >> rating;
+    	if (gameID < ngames) {
+    		if ((rating >= 0) && (rating <= 5)) {
+    		prefs[gameID] = rating;
+    		}
+    	}
+    }
+}
+
+/*  Function readPlan
+ *  fileName: path to the file containing the plan
+ *  plan:    array of integers created with 366 positions
+ *  Return value: none
+ *  Throws: runtime_error if file cannot be opened
+ */
+void readPlan(string fileName, int plan[]) {
+	int gameID;
+	int k; // variable to store the value of the day (1-365)
+
+	ifstream fin(fileName); // create ifstream object
+	if (!fin.is_open()) {  // error in opening the file
+        throw runtime_error("Invalid plans file.");
+    }
+
+    while (!fin.eof()) {
+    	fin >> k;
+    	fin >> gameID;
+    	plan[k] = gameID;
+
+    }
+}
+
+/*  Function computeFunLevel
+ *  start:  first day of the vacation (1 <= start <= 365)
+ *  duration: number of vacation days (duration >= 1)
+ *  prefs: prefs[k] indicates the rating specified for game k
+ *  plan: array with 366 positions with the sequence of games 
+ *        to be played over the year. In other words, 
+ *        plan[k] indicates the game planned for day k (1 <= k <= 365) 
+ *  Return value: Sum of the ratings for games played during the vacation period.
+ *  Throws: invalid_argument exception if duration exceeds the number of days remaining in the year
+ */
+int computeFunLevel(int start, int duration, int prefs[], int plan[]) {
+	int funLevel = 0;
+
+	if (start + duration-1 > 365) {
+		throw invalid_argument("duration exceeds number of days remaining in the year");
+	}
+
+	for (int i = start; i < (start + duration); i++) {
+		funLevel += prefs[plan[i]];
+	}
+	return funLevel;
+}
+
+/*  Function findBestVacation
+ *  duration: number of vacation days
+ *  prefs: prefs[k] indicates the rate specified for game k
+ *  plan: array with 366 positions with the sequence of games 
+ *        to be played over the year. In other words, 
+ *        plan[k] indicates the game planned for day k (1 <= k <= 365) 
+ *  Return value: the earliest start date that results in the highest fun level.
+ */
+int findBestVacation(int duration, int prefs[], int plan[]) {
+	int funLevel = 0;
+	int bestDay = 0;
+
+	if (duration > 365) {
+		throw invalid_argument("duration is out of range");
+	}
+
+	for (int k = 1; k <= 366 - duration; k++) {
+		int tempscore = computeFunLevel(k, duration, prefs, plan);
+
+		if (tempscore > funLevel ) {
+			funLevel = tempscore;
+			bestDay = k;
+
+		}
+	}
+	return bestDay;
+}
+	
